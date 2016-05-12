@@ -4,9 +4,10 @@ use Mojo::Base -base;
 use Carp 'croak';
 use Mojo::ByteStream;
 use Mojo::Exception;
-use Mojo::Util qw(decode deprecated encode monkey_patch slurp);
+use Mojo::Util qw(decode deprecated encode monkey_patch slurp md5_sum);
 
 use constant DEBUG => $ENV{MOJO_TEMPLATE_DEBUG} || 0;
+use constant COVER => $ENV{MOJO_TEMPLATE_COVER} || 0;
 
 has [qw(append code prepend unparsed)] => '';
 has [qw(auto_escape compiled vars)];
@@ -167,6 +168,11 @@ sub process {
     return Mojo::Exception->new($@)->inspect($self->unparsed, $code)
       ->trace->verbose(1)
       unless $compiled = eval $self->_wrap($code, @_);
+    if (COVER) {
+        no strict 'refs';
+        *{$self->namespace . "::" . md5_sum $compiled} = $compiled;
+        use strict 'refs';
+    }
     $self->compiled($compiled);
   }
 
@@ -694,6 +700,19 @@ You can set the C<MOJO_TEMPLATE_DEBUG> environment variable to get some
 advanced diagnostics information printed to C<STDERR>.
 
   MOJO_TEMPLATE_DEBUG=1
+
+=head1 COVERAGE
+
+For L<Devel::Cover> to report correct coverage information for
+L<Mojo::Template> templates, the C<MOJO_TEMPLATE_COVER> environment
+variable needs to be set.
+
+  MOJO_TEMPLATE_COVER=1
+
+Please note that setting this environment variable WILL result in a
+memory leak. So this should only be used while executing under
+L<Devel::Cover>.
+
 
 =head1 SEE ALSO
 
