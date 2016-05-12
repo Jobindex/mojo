@@ -38,7 +38,7 @@ sub _render {
       # Try template
       if (defined(my $path = $renderer->template_path($options))) {
         $c->app->log->debug(qq{Rendering template "$name"});
-        $$output = $mt->name(qq{template "$name"})->render_file($path, @args);
+        $$output = $mt->render_file($path, @args);
       }
 
       # Try DATA section
